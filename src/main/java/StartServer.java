@@ -1,4 +1,4 @@
-import lab.second.Server;
+import second.Server;
 
 public class StartServer {
     public static void main(String[] args) {

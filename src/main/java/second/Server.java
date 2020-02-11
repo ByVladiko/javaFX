@@ -1,4 +1,4 @@
-package lab.second;
+package second;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -32,10 +32,19 @@ public class Server {
 
         System.out.println("Waiting for messages...");
 
-        while ((input = in.readLine()) != null) {
-            if (input.equalsIgnoreCase("exit")) break;
-            System.out.println(input);
+        try {
+            while ((input = in.readLine()) != null) {
+                if (input.equalsIgnoreCase("exit")) break;
+                System.out.println(input);
+            }
+        } catch (Exception e) {
+            out.close();
+            in.close();
+            client.close();
+            server.close();
+            System.out.println("Connection closed");
         }
+
         out.close();
         in.close();
         client.close();

@@ -1,4 +1,4 @@
-package lab.second;
+package second;
 
 import java.io.*;
 import java.net.Socket;
