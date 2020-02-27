@@ -1,19 +1,24 @@
-import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.stage.Stage;
+import airship.dao.FactoryDAO;
 
-public class Main extends Application {
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 
-    @Override
-    public void start(Stage primaryStage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("fxml/sample.fxml"));
-        primaryStage.setScene(new Scene(root));
-        primaryStage.show();
-    }
+public class Main {
 
-    public static void main(String[] args) throws Exception {
-        launch(args);
+    private static final String LOCALHOST_IP = "127.0.0.1";
+    private static final String REMOTE_HOSTNAME = "java.rmi.server.hostname";
+    private static final String REMOTE_SERVICE_PATH = "rmi://localhost:5555/FactoryDAO";
+
+    public static void main(String[] args) {
+        try {
+            System.setProperty(REMOTE_HOSTNAME, LOCALHOST_IP);
+            FactoryDAO factoryDAO = (FactoryDAO) Naming.lookup(REMOTE_SERVICE_PATH);
+            System.out.println(factoryDAO.getAirshipDAO().getList().get(0).toString());
+            System.exit(0);
+        } catch (RemoteException | NotBoundException | MalformedURLException e) {
+            e.printStackTrace();
+        }
     }
 }
