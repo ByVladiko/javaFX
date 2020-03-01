@@ -1,5 +1,5 @@
 #comments example
 /.idea
-nc_lab2.iml
+*.iml
 out
 target

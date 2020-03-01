@@ -2,6 +2,9 @@ package lab.second;
 
 import airship.dao.DAO;
 import airship.dao.FactoryDAO;
+import airship.model.Airship;
+import airship.model.Route;
+import airship.model.Ticket;
 
 import java.net.MalformedURLException;
 import java.rmi.Naming;
@@ -25,19 +28,19 @@ public class Client {
         }
     }
 
-    private DAO getAirshipDAO() throws RemoteException {
+    public DAO<Airship> getAirshipDAO() throws RemoteException {
         return factoryDAO.getAirshipDAO();
     }
 
-    private DAO getClientDAO() throws RemoteException {
+    public DAO<airship.model.Client> getClientDAO() throws RemoteException {
         return factoryDAO.getClientDAO();
     }
 
-    private DAO getRouteDAO() throws RemoteException {
+    public DAO<Route> getRouteDAO() throws RemoteException {
         return factoryDAO.getRouteDAO();
     }
 
-    private DAO getTicketDAO() throws RemoteException {
+    public DAO<Ticket> getTicketDAO() throws RemoteException {
         return factoryDAO.getTicketDAO();
     }
 }
