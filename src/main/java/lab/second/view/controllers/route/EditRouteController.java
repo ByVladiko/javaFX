@@ -4,7 +4,6 @@ import airship.model.Route;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import lab.second.view.controllers.MainControl;
@@ -39,13 +38,7 @@ public class EditRouteController extends MainControl implements Initializable {
     void saveRouteButtonAction(ActionEvent event) {
         String regex = "^[a-zA-Z0-9А-Яа-я._-]{3,}$";
         if(!fromTextField.getText().matches(regex) || !toTextField.getText().matches(regex)) {
-            Alert a = new Alert(Alert.AlertType.INFORMATION);
-            a.setTitle("Attention");
-            a.setHeaderText("Ops!");
-            String version = System.getProperty("java.version");
-            String content = String.format("Incorrect input", version);
-            a.setContentText(content);
-            a.showAndWait();
+            util.showAlert("Incorrect input");
             return;
         }
         editRoute.setStartPoint(fromTextField.getText());

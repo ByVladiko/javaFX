@@ -7,7 +7,6 @@ import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import lab.second.view.controllers.MainControl;
@@ -42,13 +41,7 @@ public class EditTicketController extends MainControl implements Initializable {
     @FXML
     void saveClientButtonAction(ActionEvent event) {
         if(routeChoiceBox.getValue() == null || airshipChoiceBox.getValue() == null) {
-            Alert a = new Alert(Alert.AlertType.INFORMATION);
-            a.setTitle("Attention");
-            a.setHeaderText("Ops!");
-            String version = System.getProperty("java.version");
-            String content = String.format("The choice boxes should be not empty", version);
-            a.setContentText(content);
-            a.showAndWait();
+            util.showAlert("The choice boxes should be not empty");
             return;
         }
         editTicket.setRoute(routeChoiceBox.getValue());
