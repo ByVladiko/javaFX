@@ -13,6 +13,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyEvent;
+import lab.second.view.controllers.AlertDialog;
 import lab.second.view.controllers.MainControl;
 
 import java.net.URL;
@@ -25,8 +26,6 @@ import java.util.stream.Collectors;
 public class TicketListController extends MainControl implements Initializable {
 
     private ObservableList<Ticket> tableTickets = FXCollections.observableArrayList();
-
-    public static Client client;
 
     @FXML
     private Button mainRoutesButton;
@@ -75,22 +74,22 @@ public class TicketListController extends MainControl implements Initializable {
 
     public void InputTextFieldKeyReleased(KeyEvent keyEvent) {
         try {
-            List<Ticket> tickets = util.getTicketDAO().getList().stream()
-                    .filter(it -> it.getId().toString().toLowerCase().trim().contains(idTextField.getText().trim()))
-                    .filter(it -> it.getAirship().getModel().toLowerCase().trim().contains(airshipTextField.getText().trim().trim()))
-                    .filter(it -> it.getRoute().getStartPoint().toLowerCase().trim().contains(routeFromTextField.getText().trim()))
-                    .filter(it -> it.getRoute().getEndPoint().toLowerCase().trim().contains(routeToTextField.getText().trim()))
+            List<Ticket> tickets = daoProvider.getTicketDAO().getList().stream()
+                    .filter(it -> it.getId().toString().toLowerCase().trim().startsWith(idTextField.getText().toLowerCase().trim()))
+                    .filter(it -> it.getAirship().getModel().toLowerCase().trim().startsWith(airshipTextField.getText().toLowerCase().trim()))
+                    .filter(it -> it.getRoute().getStartPoint().toLowerCase().trim().startsWith(routeFromTextField.getText().toLowerCase().trim()))
+                    .filter(it -> it.getRoute().getEndPoint().toLowerCase().trim().startsWith(routeToTextField.getText().toLowerCase().trim()))
                     .collect(Collectors.toList());
             tableTickets.setAll(tickets);
             tableViewTickets.setItems(tableTickets);
         } catch (RemoteException e) {
+            AlertDialog.showErrorAlert(e);
             e.printStackTrace();
         }
     }
 
     @FXML
     void addTicketButtonAction(ActionEvent event) {
-        AddTicketController.client = client;
         toScene("ticket/new_ticket.fxml", "New Ticket", event);
     }
 
@@ -100,8 +99,9 @@ public class TicketListController extends MainControl implements Initializable {
             return;
         }
         try {
-            util.getTicketDAO().remove(tableViewTickets.getSelectionModel().getSelectedItem());
+            daoProvider.getTicketDAO().remove(tableViewTickets.getSelectionModel().getSelectedItem());
         } catch (RemoteException e) {
+            AlertDialog.showErrorAlert(e);
             e.printStackTrace();
         }
         refreshTable();
@@ -112,20 +112,21 @@ public class TicketListController extends MainControl implements Initializable {
         if (tableViewTickets.getSelectionModel().getSelectedItem() == null) {
             return;
         }
-        EditTicketController.editTicket = tableViewTickets.getSelectionModel().getSelectedItem();
+        selectedTicket = tableViewTickets.getSelectionModel().getSelectedItem();
         toScene("ticket/edit_ticket.fxml", "Edit ticket", event);
     }
 
     private void refreshTable() {
         try {
-            if (client == null) {
-                tableTickets.setAll(util.getTicketDAO().getList());
+            if (selectedClient == null) {
+                tableTickets.setAll(daoProvider.getTicketDAO().getList());
                 tableViewTickets.setItems(tableTickets);
             } else {
+                List<Client> clients = daoProvider.getClientDAO().getList();
                 List<Ticket> ticketsOfClient = new ArrayList<>();
-                for (int i = 0; i < util.getClientDAO().getList().size(); i++) {
-                    if(util.getClientDAO().getList().get(i).getId().equals(client.getId())) {
-                        ticketsOfClient = util.getClientDAO().getList().get(i).getTickets();
+                for (int i = 0; i < clients.size(); i++) {
+                    if(clients.get(i).getId().equals(selectedClient.getId())) {
+                        ticketsOfClient = clients.get(i).getTickets();
                         break;
                     }
                 }
@@ -133,6 +134,7 @@ public class TicketListController extends MainControl implements Initializable {
                 tableViewTickets.setItems(tableTickets);
             }
         } catch (RemoteException e) {
+            AlertDialog.showErrorAlert(e);
             e.printStackTrace();
         }
     }
@@ -140,7 +142,7 @@ public class TicketListController extends MainControl implements Initializable {
     @FXML
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
-        if (client == null) {
+        if (selectedClient == null) {
             addTicketButton.setVisible(false);
             addTicketButton.managedProperty().bind(addTicketButton.visibleProperty());
         } else {

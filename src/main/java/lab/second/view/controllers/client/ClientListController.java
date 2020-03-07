@@ -10,8 +10,8 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
+import lab.second.view.controllers.AlertDialog;
 import lab.second.view.controllers.MainControl;
-import lab.second.view.controllers.ticket.TicketListController;
 
 import java.net.URL;
 import java.rmi.RemoteException;
@@ -74,15 +74,16 @@ public class ClientListController extends MainControl implements Initializable {
     @FXML
     public void InputTextFieldKeyReleased(KeyEvent keyEvent) {
         try {
-            List<Client> clients = util.getClientDAO().getList().stream()
-                    .filter(it -> it.getId().toString().toLowerCase().trim().contains(idTextField.getText().trim()))
-                    .filter(it -> it.getFirstName().toLowerCase().trim().contains(firstNameTextField.getText().trim()))
-                    .filter(it -> it.getMiddleName().toLowerCase().trim().contains(middleNameTextField.getText().trim()))
-                    .filter(it -> it.getLastName().toLowerCase().trim().contains(lastNameTextField.getText().trim()))
+            List<Client> clients = daoProvider.getClientDAO().getList().stream()
+                    .filter(it -> it.getId().toString().toLowerCase().trim().startsWith(idTextField.getText().toLowerCase().trim()))
+                    .filter(it -> it.getFirstName().toLowerCase().trim().startsWith(firstNameTextField.getText().toLowerCase().trim()))
+                    .filter(it -> it.getMiddleName().toLowerCase().trim().startsWith(middleNameTextField.getText().toLowerCase().trim()))
+                    .filter(it -> it.getLastName().toLowerCase().trim().startsWith(lastNameTextField.getText().toLowerCase().trim()))
                     .collect(Collectors.toList());
             tableClients.setAll(clients);
             tableViewClients.setItems(tableClients);
         } catch (RemoteException e) {
+            AlertDialog.showErrorAlert(e);
             e.printStackTrace();
         }
     }
@@ -93,8 +94,12 @@ public class ClientListController extends MainControl implements Initializable {
             if (tableViewClients.getSelectionModel().getSelectedItem() == null) {
                 return;
             }
-            TicketListController.client = tableViewClients.getSelectionModel().getSelectedItem();
-            toScene("ticket/list_tickets.fxml", "List tickets of " + tableViewClients.getSelectionModel().getSelectedItem().getId().toString(), event);
+            selectedClient = tableViewClients.getSelectionModel().getSelectedItem();
+            toScene("ticket/list_tickets.fxml",
+                    "List tickets of "
+                            + selectedClient.getFirstName()
+                            + selectedClient.getMiddleName()
+                            + selectedClient.getLastName(), event);
         }
     }
 
@@ -109,8 +114,9 @@ public class ClientListController extends MainControl implements Initializable {
             return;
         }
         try {
-            util.getClientDAO().remove(tableViewClients.getSelectionModel().getSelectedItem());
+            daoProvider.getClientDAO().remove(tableViewClients.getSelectionModel().getSelectedItem());
         } catch (RemoteException e) {
+            AlertDialog.showErrorAlert(e);
             e.printStackTrace();
         }
         refreshTable();
@@ -121,13 +127,13 @@ public class ClientListController extends MainControl implements Initializable {
         if (tableViewClients.getSelectionModel().getSelectedItem() == null) {
             return;
         }
-        EditClientController.editClient = tableViewClients.getSelectionModel().getSelectedItem();
-        toScene("route/edit_route.fxml", "List Routes", event);
+        selectedClient = tableViewClients.getSelectionModel().getSelectedItem();
+        toScene("client/edit_client.fxml", "Edit client " + selectedClient.getId().toString(), event);
     }
 
     private void refreshTable() {
         try {
-            tableClients.setAll(util.getClientDAO().getList());
+            tableClients.setAll(daoProvider.getClientDAO().getList());
         } catch (RemoteException e) {
             e.printStackTrace();
         }

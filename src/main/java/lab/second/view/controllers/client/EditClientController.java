@@ -1,17 +1,15 @@
 package lab.second.view.controllers.client;
 
-import airship.model.Client;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+import lab.second.view.controllers.AlertDialog;
 import lab.second.view.controllers.MainControl;
 
 import java.io.IOException;
 
 public class EditClientController extends MainControl {
-
-    static Client editClient;
 
     @FXML
     private Button mainRoutesButton;
@@ -37,25 +35,26 @@ public class EditClientController extends MainControl {
     @FXML
     void saveClientButtonAction(ActionEvent event) {
         String regex = "^[a-zA-Z0-9А-Яа-я._-]{3,}$";
-        if(!firstNameTextField.getText().matches(regex) || !middleNameField.getText().matches(regex)) {
-            util.showAlert("Incorrect input");
+        if(!firstNameTextField.getText().matches(regex) || !middleNameField.getText().matches(regex) || !lastNameTextField.getText().matches(regex)) {
+            AlertDialog.showAlert("Incorrect input");
             return;
         }
-        editClient.setFirstName(firstNameTextField.getText());
-        editClient.setMiddleName(middleNameField.getText());
-        editClient.setLastName(lastNameTextField.getText());
+        selectedClient.setFirstName(firstNameTextField.getText());
+        selectedClient.setMiddleName(middleNameField.getText());
+        selectedClient.setLastName(lastNameTextField.getText());
         try {
-            util.getClientDAO().add(editClient);
+            daoProvider.getClientDAO().add(selectedClient);
             toScene("client/list_clients.fxml", "List Clients", event);
         } catch (IOException e) {
+            AlertDialog.showErrorAlert(e);
             e.printStackTrace();
         }
     }
 
     @FXML
     void initialize() {
-        firstNameTextField.setText(editClient.getFirstName());
-        middleNameField.setText(editClient.getMiddleName());
-        lastNameTextField.setText(editClient.getLastName());
+        firstNameTextField.setText(selectedClient.getFirstName());
+        middleNameField.setText(selectedClient.getMiddleName());
+        lastNameTextField.setText(selectedClient.getLastName());
     }
 }

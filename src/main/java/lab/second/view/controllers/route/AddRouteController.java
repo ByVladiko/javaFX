@@ -6,6 +6,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+import lab.second.view.controllers.AlertDialog;
 import lab.second.view.controllers.MainControl;
 
 import java.io.IOException;
@@ -36,13 +37,14 @@ public class AddRouteController extends MainControl implements Initializable {
     void saveRouteButtonAction(ActionEvent event) {
         String regex = "^[a-zA-Z0-9А-Яа-я._-]{3,}$";
         if(!fromTextField.getText().matches(regex) || !toTextField.getText().matches(regex)) {
-            util.showAlert("Incorrect input");
+            AlertDialog.showAlert("Incorrect input");
             return;
         }
         try {
-            util.getRouteDAO().add(new Route(fromTextField.getText(), toTextField.getText()));
+            daoProvider.getRouteDAO().add(new Route(fromTextField.getText(), toTextField.getText()));
             toScene("route/list_routes.fxml", "List Routes", event);
         } catch (IOException e) {
+            AlertDialog.showErrorAlert(e);
             e.printStackTrace();
         }
     }

@@ -1,7 +1,6 @@
 package lab.second.view.controllers.ticket;
 
 import airship.model.Airship;
-import airship.model.Client;
 import airship.model.Route;
 import airship.model.Ticket;
 import javafx.collections.FXCollections;
@@ -10,6 +9,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import lab.second.view.controllers.AlertDialog;
 import lab.second.view.controllers.MainControl;
 
 import java.io.IOException;
@@ -19,8 +19,6 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 public class AddTicketController extends MainControl implements Initializable {
-
-    static Client client;
 
     @FXML
     private Button mainRoutesButton;
@@ -43,18 +41,18 @@ public class AddTicketController extends MainControl implements Initializable {
     @FXML
     void saveTicketButtonAction(ActionEvent event) {
         if (routeChoiceBox.getValue() == null || airshipChoiceBox.getValue() == null) {
-            util.showAlert("The choice boxes should be not empty");
+            AlertDialog.showAlert("The choice boxes should be not empty");
             return;
         }
             Ticket newTicket = new Ticket(airshipChoiceBox.getValue(), routeChoiceBox.getValue());
-            List<Ticket> tickets = client.getTickets();
+            List<Ticket> tickets = selectedClient.getTickets();
             tickets.add(newTicket);
-            client.setTickets(tickets);
+            selectedClient.setTickets(tickets);
         try {
-            util.getClientDAO().add(client);
-            TicketListController.client = client;
+            daoProvider.getClientDAO().add(selectedClient);
             toScene("ticket/list_tickets.fxml", "List Tickets", event);
         } catch (IOException e) {
+            AlertDialog.showErrorAlert(e);
             e.printStackTrace();
         }
     }
@@ -62,9 +60,10 @@ public class AddTicketController extends MainControl implements Initializable {
     @FXML
     public void initialize(URL url, ResourceBundle resourceBundle) {
         try {
-            routeChoiceBox.setItems(FXCollections.observableArrayList(util.getRouteDAO().getList()));
-            airshipChoiceBox.setItems(FXCollections.observableArrayList(util.getAirshipDAO().getList()));
+            routeChoiceBox.setItems(FXCollections.observableArrayList(daoProvider.getRouteDAO().getList()));
+            airshipChoiceBox.setItems(FXCollections.observableArrayList(daoProvider.getAirshipDAO().getList()));
         } catch (RemoteException e) {
+            AlertDialog.showErrorAlert(e);
             e.printStackTrace();
         }
     }

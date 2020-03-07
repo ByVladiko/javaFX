@@ -2,7 +2,6 @@ package lab.second.view.controllers.route;
 
 import airship.model.Route;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -12,17 +11,16 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyEvent;
+import lab.second.view.controllers.AlertDialog;
 import lab.second.view.controllers.MainControl;
 
 import java.net.URL;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
-import java.util.stream.Collectors;
 
 public class RouteListController extends MainControl implements Initializable {
-
-    private ObservableList<Route> tableRoutes  = FXCollections.observableArrayList();
 
     @FXML
     private TextField fromTextField;
@@ -66,13 +64,21 @@ public class RouteListController extends MainControl implements Initializable {
     @FXML
     void InputTextFieldKeyReleased(KeyEvent event) {
         try {
-            List<Route> routes = util.getRouteDAO().getList().stream()
-                    .filter(it -> it.getId().toString().toLowerCase().trim().contains(idTextField.getText().trim()))
-                    .filter(it -> it.getStartPoint().toLowerCase().trim().contains(fromTextField.getText().trim()))
-                    .filter(it -> it.getEndPoint().toLowerCase().trim().contains(toTextField.getText().trim()))
-                    .collect(Collectors.toList());
-            tableRoutes.setAll(routes);
-            tableViewRoutes.setItems(tableRoutes);
+            List<Route> repository = daoProvider.getRouteDAO().getList();
+            List<Route> routes = new ArrayList<>();
+            for (int i = 0; i < repository.size(); i++) {
+                if (repository.get(i).getId().toString().trim().toLowerCase().startsWith(idTextField.getText().trim().toLowerCase())
+                        && repository.get(i).getStartPoint().trim().toLowerCase().startsWith(fromTextField.getText().trim().toLowerCase())
+                        && repository.get(i).getEndPoint().trim().toLowerCase().startsWith(toTextField.getText().trim().toLowerCase())) {
+                    routes.add(repository.get(i));
+                }
+            }
+//            List<Route> routes = util.getRouteDAO().getList().stream()
+//                    .filter(it -> it.getId().toString().toLowerCase().trim().contains(idTextField.getText().trim()))
+//                    .filter(it -> it.getStartPoint().toLowerCase().trim().contains(fromTextField.getText().trim()))
+//                    .filter(it -> it.getEndPoint().toLowerCase().trim().contains(toTextField.getText().trim()))
+//                    .collect(Collectors.toList());
+            setItems(routes);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -89,9 +95,12 @@ public class RouteListController extends MainControl implements Initializable {
             return;
         }
         try {
-            util.getRouteDAO().remove(tableViewRoutes.getSelectionModel().getSelectedItem());
+            if(!daoProvider.getRouteDAO().remove(tableViewRoutes.getSelectionModel().getSelectedItem())) {
+                AlertDialog.showAlert("There is a link to this item");
+            }
         } catch (RemoteException e) {
             e.printStackTrace();
+            AlertDialog.showErrorAlert(e);
         }
         refreshTable();
     }
@@ -101,17 +110,20 @@ public class RouteListController extends MainControl implements Initializable {
         if(tableViewRoutes.getSelectionModel().getSelectedItem() == null) {
             return;
         }
-        EditRouteController.editRoute = tableViewRoutes.getSelectionModel().getSelectedItem();
+        selectedRoute = tableViewRoutes.getSelectionModel().getSelectedItem();
         toScene("route/edit_route.fxml", "List Routes", event);
     }
 
     private void refreshTable() {
         try {
-            tableRoutes.setAll(util.getRouteDAO().getList());
+            setItems(daoProvider.getRouteDAO().getList());
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-        tableViewRoutes.setItems(tableRoutes);
+    }
+
+    private void setItems(List<Route> list) {
+        tableViewRoutes.setItems(FXCollections.observableArrayList(list));
     }
 
     public void initialize(URL url, ResourceBundle resourceBundle) {
