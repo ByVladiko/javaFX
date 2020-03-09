@@ -26,7 +26,7 @@ public class AirshipFX {
     }
 
     public UUID getId() {
-        return UUID.fromString(id.toString());
+        return UUID.fromString(id.getValue());
     }
 
     public StringProperty idProperty() {

@@ -19,8 +19,6 @@ public class ClientFX {
     private StringProperty lastName;
     private ObservableList<TicketFX> tickets;
 
-    private ConverterToFX converter = new ConverterToFX();
-
     public ClientFX(StringProperty id, StringProperty firstName, StringProperty middleName, StringProperty lastName, ObservableList<TicketFX> tickets) {
         this.id = id;
         this.firstName = firstName;
@@ -36,12 +34,12 @@ public class ClientFX {
         lastName = new SimpleStringProperty(client.getLastName());
         tickets = FXCollections.observableArrayList();
         for (int i = 0; i < client.getTickets().size(); i++) {
-            tickets.add(converter.convertToFx(client.getTickets().get(i)));
+            tickets.add(ConverterToFX.convertToFx(client.getTickets().get(i)));
         }
     }
 
     public UUID getId() {
-        return UUID.fromString(id.toString());
+        return UUID.fromString(id.getValue());
     }
 
     public StringProperty idProperty() {
@@ -95,7 +93,7 @@ public class ClientFX {
     public List<Ticket> getTickets() {
         ArrayList<Ticket> tickets = new ArrayList<>();
         for (int i = 0; i < this.tickets.size(); i++) {
-            tickets.add(converter.convertFxToModel(this.tickets.get(i)));
+            tickets.add(ConverterToFX.convertFxToModel(this.tickets.get(i)));
         }
         return tickets;
     }

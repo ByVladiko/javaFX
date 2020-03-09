@@ -12,8 +12,6 @@ public class TicketFX {
     private AirshipFX airship;
     private RouteFX route;
 
-    private ConverterToFX converter = new ConverterToFX();
-
     public TicketFX(StringProperty id, AirshipFX airship, RouteFX route) {
         this.id = id;
         this.airship = airship;
@@ -22,12 +20,12 @@ public class TicketFX {
 
     public TicketFX(Ticket ticket) {
         this.id = new SimpleStringProperty(ticket.getId().toString());
-        this.airship = converter.convertToFx(ticket).getAirship();
-        this.route = converter.convertToFx(ticket).getRoute();
+        this.airship = ConverterToFX.convertToFx(ticket.getAirship());
+        this.route = ConverterToFX.convertToFx(ticket.getRoute());
     }
 
     public UUID getId() {
-        return UUID.fromString(id.toString());
+        return UUID.fromString(id.getValue());
     }
 
     public StringProperty idProperty() {
