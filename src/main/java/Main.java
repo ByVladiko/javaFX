@@ -3,6 +3,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import lab.second.view.AlertDialog;
 
 import java.io.IOException;
 
@@ -23,6 +24,7 @@ public class Main extends Application {
             primaryStage.setScene(scene);
             primaryStage.show();
         } catch (IOException e) {
+            AlertDialog.showErrorAlert(e);
             e.printStackTrace();
         }
     }

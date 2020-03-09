@@ -8,20 +8,21 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
-import lab.second.view.controllers.AlertDialog;
+import lab.second.view.AlertDialog;
+import lab.second.view.ConverterToFX;
 import lab.second.view.controllers.MainControl;
+import lab.second.view.model.ClientFX;
 
 import java.net.URL;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
-import java.util.stream.Collectors;
 
 public class ClientListController extends MainControl implements Initializable {
 
-    private ObservableList<Client> tableClients  = FXCollections.observableArrayList();
+    private ObservableList<ClientFX> clientFXObservableList  = FXCollections.observableArrayList();
 
     @FXML
     private Button mainRoutesButton;
@@ -45,6 +46,9 @@ public class ClientListController extends MainControl implements Initializable {
     private TextField lastNameTextField;
 
     @FXML
+    private Button searchClientButton;
+
+    @FXML
     private Button addClientButton;
 
     @FXML
@@ -54,52 +58,55 @@ public class ClientListController extends MainControl implements Initializable {
     private Button deleteClientButton;
 
     @FXML
-    private TableView<Client> tableViewClients;
+    private TableView<ClientFX> tableViewClients;
 
     @FXML
     private TableRow<Client> tableRowClient;
 
     @FXML
-    private TableColumn<Client, String> tableClientColumnId;
+    private TableColumn<ClientFX, String> tableClientColumnId;
 
     @FXML
-    private TableColumn<Client, String> tableClientColumnFirstName;
+    private TableColumn<ClientFX, String> tableClientColumnFirstName;
 
     @FXML
-    private TableColumn<Client, String> tableClientsColumnMiddleName;
+    private TableColumn<ClientFX, String> tableClientsColumnMiddleName;
 
     @FXML
-    private TableColumn<Client, String> tableClientsColumnLastName;
+    private TableColumn<ClientFX, String> tableClientsColumnLastName;
 
     @FXML
-    public void InputTextFieldKeyReleased(KeyEvent keyEvent) {
-        try {
-            List<Client> clients = daoProvider.getClientDAO().getList().stream()
-                    .filter(it -> it.getId().toString().toLowerCase().trim().startsWith(idTextField.getText().toLowerCase().trim()))
-                    .filter(it -> it.getFirstName().toLowerCase().trim().startsWith(firstNameTextField.getText().toLowerCase().trim()))
-                    .filter(it -> it.getMiddleName().toLowerCase().trim().startsWith(middleNameTextField.getText().toLowerCase().trim()))
-                    .filter(it -> it.getLastName().toLowerCase().trim().startsWith(lastNameTextField.getText().toLowerCase().trim()))
-                    .collect(Collectors.toList());
-            tableClients.setAll(clients);
-            tableViewClients.setItems(tableClients);
-        } catch (RemoteException e) {
-            AlertDialog.showErrorAlert(e);
-            e.printStackTrace();
+    void showTicketsMouseClicked(MouseEvent event) {
+        ClientFX selectedItem = tableViewClients.getSelectionModel().getSelectedItem();
+        if (event.getClickCount() == 2) {
+            if (selectedItem == null) {
+                return;
+            }
+            MainControl.selectedClient = ConverterToFX.convertFxToModel(selectedItem);
+            toScene("ticket/list_tickets.fxml",
+                    "List tickets of "
+                            + selectedClient.getFirstName()
+                            + " " + selectedClient.getMiddleName()
+                            + " " + selectedClient.getLastName(), event);
         }
     }
 
     @FXML
-    void showTicketsMouseClicked(MouseEvent event) {
-        if (event.getClickCount() == 2) {
-            if (tableViewClients.getSelectionModel().getSelectedItem() == null) {
-                return;
+    void searchClientButtonAction(ActionEvent event) {
+        List<Client> repository = new ArrayList<>();
+        try {
+            repository = daoProvider.getClientDAO().getList();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        clientFXObservableList.clear();
+        for (Client client : repository) {
+            if (client.getId().toString().trim().startsWith(idTextField.getText().trim())
+                    && client.getFirstName().trim().startsWith(firstNameTextField.getText().trim())
+                    && client.getMiddleName().trim().startsWith(middleNameTextField.getText().trim())
+                    && client.getLastName().trim().startsWith(lastNameTextField.getText().trim())) {
+                clientFXObservableList.add(ConverterToFX.convertToFx(client));
             }
-            selectedClient = tableViewClients.getSelectionModel().getSelectedItem();
-            toScene("ticket/list_tickets.fxml",
-                    "List tickets of "
-                            + selectedClient.getFirstName()
-                            + selectedClient.getMiddleName()
-                            + selectedClient.getLastName(), event);
         }
     }
 
@@ -110,34 +117,38 @@ public class ClientListController extends MainControl implements Initializable {
 
     @FXML
     void deleteClientButtonAction(ActionEvent event) {
-        if (tableViewClients.getSelectionModel().getSelectedItem() == null) {
+        ClientFX selectedItem = tableViewClients.getSelectionModel().getSelectedItem();
+        if (selectedItem == null) {
             return;
         }
         try {
-            daoProvider.getClientDAO().remove(tableViewClients.getSelectionModel().getSelectedItem());
+            if(!daoProvider.getClientDAO().remove(ConverterToFX.convertFxToModel(selectedItem))) {
+                AlertDialog.showAlert("There is a link to this item");
+            } else {
+                clientFXObservableList.remove(selectedItem);
+            }
         } catch (RemoteException e) {
             AlertDialog.showErrorAlert(e);
             e.printStackTrace();
         }
-        refreshTable();
     }
 
     @FXML
     void editClientButtonAction(ActionEvent event) {
-        if (tableViewClients.getSelectionModel().getSelectedItem() == null) {
+        ClientFX selectedItem = tableViewClients.getSelectionModel().getSelectedItem();
+        if (selectedItem == null) {
             return;
         }
-        selectedClient = tableViewClients.getSelectionModel().getSelectedItem();
-        toScene("client/edit_client.fxml", "Edit client " + selectedClient.getId().toString(), event);
+        MainControl.selectedClient = ConverterToFX.convertFxToModel(selectedItem);
+        toScene("client/edit_client.fxml", "Edit client " + selectedItem.getId().toString(), event);
     }
 
-    private void refreshTable() {
-        try {
-            tableClients.setAll(daoProvider.getClientDAO().getList());
-        } catch (RemoteException e) {
-            e.printStackTrace();
+    private void setItems(List<Client> list) {
+        clientFXObservableList.clear();
+        for (Client client : list) {
+            clientFXObservableList.add(ConverterToFX.convertToFx(client));
         }
-        tableViewClients.setItems(tableClients);
+        tableViewClients.setItems(clientFXObservableList);
     }
 
     @Override
@@ -148,8 +159,12 @@ public class ClientListController extends MainControl implements Initializable {
         tableClientsColumnMiddleName.setCellValueFactory(new PropertyValueFactory<>("middleName"));
         tableClientsColumnLastName.setCellValueFactory(new PropertyValueFactory<>("lastName"));
 
-        refreshTable();
-
+        try {
+            setItems(daoProvider.getClientDAO().getList());
+        } catch (RemoteException e) {
+            AlertDialog.showErrorAlert(e);
+            e.printStackTrace();
+        }
     }
 }
 

@@ -6,6 +6,7 @@ import airship.model.Airship;
 import airship.model.Route;
 import airship.model.Ticket;
 import airship.model.Client;
+import lab.second.view.AlertDialog;
 
 import java.net.MalformedURLException;
 import java.rmi.Naming;

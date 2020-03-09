@@ -6,7 +6,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
-import lab.second.view.controllers.AlertDialog;
+import lab.second.view.AlertDialog;
 import lab.second.view.controllers.MainControl;
 
 import java.io.IOException;

@@ -2,6 +2,7 @@ package lab.second.view.controllers.route;
 
 import airship.model.Route;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -10,9 +11,10 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.input.KeyEvent;
-import lab.second.view.controllers.AlertDialog;
+import lab.second.view.AlertDialog;
+import lab.second.view.ConverterToFX;
 import lab.second.view.controllers.MainControl;
+import lab.second.view.model.RouteFX;
 
 import java.net.URL;
 import java.rmi.RemoteException;
@@ -21,6 +23,8 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 public class RouteListController extends MainControl implements Initializable {
+
+    private ObservableList<RouteFX> routeFXObservableList = FXCollections.observableArrayList();
 
     @FXML
     private TextField fromTextField;
@@ -32,16 +36,19 @@ public class RouteListController extends MainControl implements Initializable {
     private TextField idTextField;
 
     @FXML
-    private TableView<Route> tableViewRoutes;
+    private Button searchRouteButton;
 
     @FXML
-    private TableColumn<Route, Integer> tableRoutesColumnId;
+    private TableView<RouteFX> tableViewRoutes;
 
     @FXML
-    private TableColumn<Route, String> tableRoutesColumnFrom;
+    private TableColumn<RouteFX, String> tableRoutesColumnId;
 
     @FXML
-    private TableColumn<Route, String> tableRoutesColumnTo;
+    private TableColumn<RouteFX, String> tableRoutesColumnFrom;
+
+    @FXML
+    private TableColumn<RouteFX, String> tableRoutesColumnTo;
 
     @FXML
     private Button addRouteButton;
@@ -62,25 +69,20 @@ public class RouteListController extends MainControl implements Initializable {
     private Button mainClientsButton;
 
     @FXML
-    void InputTextFieldKeyReleased(KeyEvent event) {
+    void searchRouteButtonAction(ActionEvent event) {
+        List<Route> repository = new ArrayList<>();
         try {
-            List<Route> repository = daoProvider.getRouteDAO().getList();
-            List<Route> routes = new ArrayList<>();
-            for (int i = 0; i < repository.size(); i++) {
-                if (repository.get(i).getId().toString().trim().toLowerCase().startsWith(idTextField.getText().trim().toLowerCase())
-                        && repository.get(i).getStartPoint().trim().toLowerCase().startsWith(fromTextField.getText().trim().toLowerCase())
-                        && repository.get(i).getEndPoint().trim().toLowerCase().startsWith(toTextField.getText().trim().toLowerCase())) {
-                    routes.add(repository.get(i));
-                }
-            }
-//            List<Route> routes = util.getRouteDAO().getList().stream()
-//                    .filter(it -> it.getId().toString().toLowerCase().trim().contains(idTextField.getText().trim()))
-//                    .filter(it -> it.getStartPoint().toLowerCase().trim().contains(fromTextField.getText().trim()))
-//                    .filter(it -> it.getEndPoint().toLowerCase().trim().contains(toTextField.getText().trim()))
-//                    .collect(Collectors.toList());
-            setItems(routes);
+            repository = daoProvider.getRouteDAO().getList();
         } catch (RemoteException e) {
             e.printStackTrace();
+        }
+        routeFXObservableList.clear();
+        for (Route route : repository) {
+            if (route.getId().toString().trim().startsWith(idTextField.getText().trim())
+                    && route.getStartPoint().trim().startsWith(fromTextField.getText().trim())
+                    && route.getEndPoint().trim().startsWith(toTextField.getText().trim())) {
+                routeFXObservableList.add(ConverterToFX.convertToFx(route));
+            }
         }
     }
 
@@ -91,39 +93,38 @@ public class RouteListController extends MainControl implements Initializable {
 
     @FXML
     public void deleteRouteButtonAction(ActionEvent event) {
-        if (tableViewRoutes.getSelectionModel().getSelectedItem() == null) {
+        RouteFX selectedItem = tableViewRoutes.getSelectionModel().getSelectedItem();
+        if (selectedItem == null) {
             return;
         }
         try {
-            if(!daoProvider.getRouteDAO().remove(tableViewRoutes.getSelectionModel().getSelectedItem())) {
+            if(!daoProvider.getRouteDAO().remove(ConverterToFX.convertFxToModel(selectedItem))) {
                 AlertDialog.showAlert("There is a link to this item");
+            } else {
+                routeFXObservableList.remove(selectedItem);
             }
         } catch (RemoteException e) {
-            e.printStackTrace();
             AlertDialog.showErrorAlert(e);
+            e.printStackTrace();
         }
-        refreshTable();
     }
 
     @FXML
     void editRouteButtonAction(ActionEvent event) {
-        if(tableViewRoutes.getSelectionModel().getSelectedItem() == null) {
+        RouteFX selectedItem = tableViewRoutes.getSelectionModel().getSelectedItem();
+        if(selectedItem == null) {
             return;
         }
-        selectedRoute = tableViewRoutes.getSelectionModel().getSelectedItem();
+        MainControl.selectedRoute = ConverterToFX.convertFxToModel(selectedItem);
         toScene("route/edit_route.fxml", "List Routes", event);
     }
 
-    private void refreshTable() {
-        try {
-            setItems(daoProvider.getRouteDAO().getList());
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
-    }
-
     private void setItems(List<Route> list) {
-        tableViewRoutes.setItems(FXCollections.observableArrayList(list));
+        routeFXObservableList.clear();
+        for (Route route : list) {
+            routeFXObservableList.add(ConverterToFX.convertToFx(route));
+        }
+        tableViewRoutes.setItems(routeFXObservableList);
     }
 
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -132,7 +133,12 @@ public class RouteListController extends MainControl implements Initializable {
         tableRoutesColumnFrom.setCellValueFactory(new PropertyValueFactory<>("startPoint"));
         tableRoutesColumnTo.setCellValueFactory(new PropertyValueFactory<>("endPoint"));
 
-        refreshTable();
+        try {
+            setItems(daoProvider.getRouteDAO().getList());
+        } catch (RemoteException e) {
+            AlertDialog.showErrorAlert(e);
+            e.printStackTrace();
+        }
     }
 }
 

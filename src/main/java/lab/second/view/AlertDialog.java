@@ -1,4 +1,4 @@
-package lab.second.view.controllers;
+package lab.second.view;
 
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
